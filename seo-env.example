@@ -1,0 +1,14 @@
+# Alan adını bağladıktan sonra gerçek adresi yazın.
+NEXT_PUBLIC_SITE_URL=https://alanadiniz.com
+
+# Marka adı
+NEXT_PUBLIC_SITE_NAME=Eskort Araç İlanları
+NEXT_PUBLIC_SITE_SHORT_NAME=EskortAraç
+
+# İletişim
+NEXT_PUBLIC_CONTACT_EMAIL=iletisim@alanadiniz.com
+NEXT_PUBLIC_CONTACT_WHATSAPP=905555555555
+
+# Google Search Console HTML etiketi doğrulama kodu.
+# Yalnızca content değerini yazın.
+GOOGLE_SITE_VERIFICATION=
