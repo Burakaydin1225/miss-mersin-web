@@ -1,7 +1,3 @@
-import { config } from "dotenv";
-
-config({ path: "env" });
-
 export function getRequiredEnv(name: string): string {
   const value = process.env[name]?.trim();
 
