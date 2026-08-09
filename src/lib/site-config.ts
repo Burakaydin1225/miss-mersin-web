@@ -1,6 +1,8 @@
 import { productRegions } from "./product-regions";
+import { getRequiredEnv } from "./env";
 
-const DEFAULT_SITE_URL = "https://www.beylikduzu25.com";
+const DEFAULT_SITE_URL = getRequiredEnv("R2_PUBLIC_DOMAIN");
+const LEGACY_SITE_DOMAIN = getRequiredEnv("R2_LEGACY_DOMAIN");
 
 function normalizeSiteUrl(value: string): string {
   const trimmedValue = value.trim();
@@ -18,10 +20,10 @@ function normalizeSiteUrl(value: string): string {
     const parsedUrl = new URL(withProtocol);
 
     if (
-      parsedUrl.hostname === "beylikduzu24.com" ||
-      parsedUrl.hostname === "www.beylikduzu24.com"
+      parsedUrl.hostname === LEGACY_SITE_DOMAIN ||
+      parsedUrl.hostname === `www.${LEGACY_SITE_DOMAIN}`
     ) {
-      parsedUrl.hostname = "www.beylikduzu25.com";
+      parsedUrl.hostname = `www.${DEFAULT_SITE_URL}`;
     }
 
     if (
@@ -42,25 +44,25 @@ function normalizeSiteUrl(value: string): string {
 }
 
 const resolvedSiteUrl = normalizeSiteUrl(
-  process.env.NEXT_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL,
+  process.env.NEXT_PUBLIC_SITE_URL ?? `www.${DEFAULT_SITE_URL}`,
 );
 
 export const siteConfig = {
-  name: process.env.NEXT_PUBLIC_SITE_NAME?.trim() || "Miss İstanbul",
+  name: process.env.NEXT_PUBLIC_SITE_NAME?.trim() || "Miss Mersin",
 
-  shortName: process.env.NEXT_PUBLIC_SITE_SHORT_NAME?.trim() || "Miss İstanbul",
+  shortName: process.env.NEXT_PUBLIC_SITE_SHORT_NAME?.trim() || "Miss Mersin",
 
   url: resolvedSiteUrl,
 
-  homeTitle: "Beylikdüzü Escort İlanları | Miss İstanbul",
+  homeTitle: "Mersin Escort İlanları | Miss Mersin",
 
-  homeHeading: "Beylikdüzü Escort İlanları",
+  homeHeading: "Mersin Escort İlanları",
 
   description:
-    "Beylikdüzü escort ilanlarını VIP, Premium ve Gold kategorilerinde inceleyin. Güncel profil, bölge ve iletişim detayları Miss İstanbul'da.",
+    "Mersin escort ilanlarını VIP, Premium ve Gold kategorilerinde inceleyin. Güncel profil, bölge ve iletişim detayları Miss Mersin'da.",
 
   homeIntro:
-    "Beylikdüzü başta olmak üzere Avcılar, Esenyurt ve çevre bölgelerdeki güncel ilanları kategori ve bölge seçenekleriyle inceleyin.",
+    "Erdemli başta olmak üzere Kız Kalesi, Mezitli, Toros, Yenişehir ve çevre bölgelerdeki güncel ilanları kategori ve bölge seçenekleriyle inceleyin.",
 
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || "",
 

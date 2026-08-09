@@ -16,7 +16,7 @@ export default function AboutPage() {
     <PublicPageShell
       eyebrow="Platform hakkında"
       title="Hakkımızda"
-      description=" Beylikdüzü escort ile müşteriyi buluşturan ilan platformuyuz."
+      description=" Mersin escort ile müşteriyi buluşturan ilan platformuyuz."
     >
       <section>
         <h2 className="text-lg font-bold text-neutral-950">

@@ -82,7 +82,7 @@ export function SiteSettingsForm({
                 initialSettings.companyName
               }
               className={inputClassName}
-              placeholder="Miss İstanbul"
+              placeholder="Miss Mersin"
             />
           </div>
 
