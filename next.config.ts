@@ -60,7 +60,7 @@ const nextConfig: NextConfig = {
             value: legacyDomain,
           },
         ],
-        destination: `https://${canonicalHost}/:path*`,
+        destination: `${canonicalHost}/:path*`,
         permanent: true,
       },
       {
@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
             value: `www.${legacyDomain}`,
           },
         ],
-        destination: `https://${canonicalHost}/:path*`,
+        destination: `${canonicalHost}/:path*`,
         permanent: true,
       },
     ];
