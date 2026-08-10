@@ -1,42 +1,27 @@
 import type { NextConfig } from "next";
 
-const canonicalHost = "www.erdemli25.com";
+import { getRequiredEnv, getRequiredEnvUrl } from "./src/lib/env";
 
-const remotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
+const siteUrl = getRequiredEnvUrl("NEXT_PUBLIC_SITE_URL");
+const canonicalHost = siteUrl.hostname;
+const legacyDomain = getRequiredEnv("R2_LEGACY_DOMAIN");
+const mediaUrl = getRequiredEnvUrl("R2_PUBLIC_URL");
+const mediaHost = mediaUrl.hostname;
+
+const remotePatterns = [
   {
-    protocol: "https",
+    protocol: "https" as const,
     hostname: "images.unsplash.com",
     port: "",
     pathname: "/**",
-  },
+  } as const,
   {
-    protocol: "https",
-    hostname: "media.erdemli25.com",
+    protocol: "https" as const,
+    hostname: mediaHost,
     port: "",
     pathname: "/**",
-  },
-];
-
-const r2PublicUrl = process.env.R2_PUBLIC_URL?.trim();
-
-if (r2PublicUrl) {
-  try {
-    const parsedR2Url = new URL(r2PublicUrl);
-
-    if (parsedR2Url.hostname !== "media.erdemli24.com") {
-      remotePatterns.push({
-        protocol: "https",
-        hostname: parsedR2Url.hostname,
-        port: "",
-        pathname: "/**",
-      });
-    }
-  } catch {
-    console.warn(
-      "R2_PUBLIC_URL geçersiz olduğu için image remotePatterns içine eklenmedi.",
-    );
-  }
-}
+  } as const,
+] satisfies NonNullable<NextConfig["images"]>["remotePatterns"];
 
 const noIndexHeaders = [
   {
@@ -72,7 +57,7 @@ const nextConfig: NextConfig = {
         has: [
           {
             type: "host",
-            value: "erdemli24.com",
+            value: legacyDomain,
           },
         ],
         destination: `https://${canonicalHost}/:path*`,
@@ -83,7 +68,7 @@ const nextConfig: NextConfig = {
         has: [
           {
             type: "host",
-            value: "www.erdemli24.com",
+            value: `www.${legacyDomain}`,
           },
         ],
         destination: `https://${canonicalHost}/:path*`,
