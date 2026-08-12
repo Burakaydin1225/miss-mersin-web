@@ -43,7 +43,7 @@ function getProductRegionName(product: ProductSeoRecord): string {
     ? getSeoRegionBySlug(product.region)
     : null;
 
-  return regionInformation?.shortName || "İstanbul";
+  return regionInformation?.shortName || "Mersin";
 }
 
 function createProductSeoTitle(

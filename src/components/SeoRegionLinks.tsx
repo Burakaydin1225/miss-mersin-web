@@ -21,7 +21,7 @@ export function SeoRegionLinks({
 
   return (
     <nav
-      aria-label="İstanbul bölge ilanları"
+      aria-label="Mersin bölge ilanları"
       className="mt-2 flex min-w-0 items-center gap-1.5 overflow-x-auto pb-0.5 sm:mt-0 sm:shrink-0 sm:justify-end"
     >
       <span

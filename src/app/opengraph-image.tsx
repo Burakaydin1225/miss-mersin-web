@@ -85,7 +85,7 @@ export default function OpenGraphImage() {
             color: "rgba(255,255,255,.56)",
           }}
         >
-          İstanbul geneli · Doğrudan iletişim · Güncel ilanlar
+          Mersin geneli · Doğrudan iletişim · Güncel ilanlar
         </div>
       </div>
     ),
