@@ -214,6 +214,37 @@ export function ProductGallery({
 
   return (
     <div className="w-full min-w-0">
+      <div
+        data-nosnippet
+        role="note"
+        aria-label="Önemli güvenlik duyurusu"
+        className="mx-auto mb-3 max-w-[760px] overflow-hidden rounded-[18px] border border-red-200/80 bg-[linear-gradient(135deg,#ffffff_0%,#fff7f7_100%)] shadow-[0_8px_24px_rgba(185,28,28,0.08)]"
+      >
+        <div className="flex items-start gap-3 px-3.5 py-3 sm:items-center sm:px-4 sm:py-3.5">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-700 ring-1 ring-red-200 sm:size-10">
+            <span
+              aria-hidden="true"
+              className="text-base font-black"
+            >
+              !
+            </span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-red-700 sm:text-[11px]">
+              Önemli duyuru
+            </p>
+
+            <p className="mt-0.5 text-[11px] font-semibold leading-[17px] text-neutral-700 sm:text-[12px] sm:leading-5">
+              Dolandırıcı mağduru olmamak için görüşme öncesi sizden para talep edenlere itibar etmeyiniz.Dikkatli olun bu durumda{" "}
+              <span className="font-black text-red-700">
+                SORUMLULUK KABUL EDİLMEMEKTEDİR.
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
       <button
         type="button"
         onClick={() =>
