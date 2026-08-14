@@ -257,30 +257,6 @@ function getCategoryNeonTheme(categoryValue: string) {
   switch (categoryValue) {
     case "VIP":
       return {
-        accent: "#f0abfc",
-        secondary: "#d946ef",
-        tertiary: "#f59e0b",
-        titleColor: "#fff4ff",
-        titleBackground:
-          "linear-gradient(90deg, #120014 0%, #3b0a46 48%, #120014 100%)",
-        frameBackground:
-          "linear-gradient(135deg, #4a044e 0%, #d946ef 28%, #f0abfc 47%, #f59e0b 58%, #7e22ce 76%, #25002b 100%)",
-        glow:
-          "0 0 0 1px rgba(240,171,252,0.34), 0 10px 24px rgba(88,28,135,0.18)",
-        hoverGlow:
-          "0 0 0 1px rgba(255,255,255,0.42), 0 14px 30px rgba(126,34,206,0.24)",
-        divider: "rgba(240,171,252,0.72)",
-        icon: "👑",
-        cornerLabel: "VIP",
-        cornerIcon: "♛",
-        cornerBackground:
-          "linear-gradient(135deg, rgba(15,0,18,0.96), rgba(126,34,206,0.94) 56%, rgba(245,158,11,0.92))",
-        cardOverlay:
-          "linear-gradient(145deg, rgba(240,171,252,0.18), transparent 34%, rgba(245,158,11,0.12) 72%, transparent)",
-      };
-
-    case "PREMIUM":
-      return {
         accent: "#67e8f9",
         secondary: "#06b6d4",
         tertiary: "#8b5cf6",
@@ -294,13 +270,37 @@ function getCategoryNeonTheme(categoryValue: string) {
         hoverGlow:
           "0 0 0 1px rgba(255,255,255,0.38), 0 14px 30px rgba(8,145,178,0.22)",
         divider: "rgba(103,232,249,0.66)",
-        icon: "💎",
-        cornerLabel: "PREMIUM",
-        cornerIcon: "◆",
+        icon: "👑",
+        cornerLabel: "VIP",
+        cornerIcon: "♛",
         cornerBackground:
           "linear-gradient(135deg, rgba(0,20,26,0.96), rgba(8,145,178,0.94) 58%, rgba(124,58,237,0.9))",
         cardOverlay:
           "linear-gradient(145deg, rgba(103,232,249,0.16), transparent 38%, rgba(139,92,246,0.12) 76%, transparent)",
+      };
+
+    case "PREMIUM":
+      return {
+        accent: "#f0abfc",
+        secondary: "#d946ef",
+        tertiary: "#f59e0b",
+        titleColor: "#fff4ff",
+        titleBackground:
+          "linear-gradient(90deg, #120014 0%, #3b0a46 48%, #120014 100%)",
+        frameBackground:
+          "linear-gradient(135deg, #4a044e 0%, #d946ef 28%, #f0abfc 47%, #f59e0b 58%, #7e22ce 76%, #25002b 100%)",
+        glow:
+          "0 0 0 1px rgba(240,171,252,0.34), 0 10px 24px rgba(88,28,135,0.18)",
+        hoverGlow:
+          "0 0 0 1px rgba(255,255,255,0.42), 0 14px 30px rgba(126,34,206,0.24)",
+        divider: "rgba(240,171,252,0.72)",
+        icon: "💎",
+        cornerLabel: "PREMIUM",
+        cornerIcon: "◆",
+        cornerBackground:
+          "linear-gradient(135deg, rgba(15,0,18,0.96), rgba(126,34,206,0.94) 56%, rgba(245,158,11,0.92))",
+        cardOverlay:
+          "linear-gradient(145deg, rgba(240,171,252,0.18), transparent 34%, rgba(245,158,11,0.12) 72%, transparent)",
       };
 
     default:
