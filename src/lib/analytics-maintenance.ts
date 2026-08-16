@@ -5,7 +5,8 @@ const MINUTE_IN_MS = 60 * 1_000;
 const HOUR_IN_MS = 60 * MINUTE_IN_MS;
 const DAY_IN_MS = 24 * HOUR_IN_MS;
 
-const ANALYTICS_RETENTION_DAYS = 7;
+const RAW_ANALYTICS_RETENTION_DAYS = 7;
+const DAILY_ANALYTICS_RETENTION_DAYS = 90;
 const DEFAULT_ACTIVE_SESSION_RETENTION_HOURS = 24;
 const DEFAULT_TIMEZONE_OFFSET_MINUTES = 180;
 const DEFAULT_ROLLUP_DAYS = 7;
@@ -325,7 +326,7 @@ export async function runAnalyticsMaintenance(
     summarizedDays.push(result);
   }
 
-  const retentionDays = ANALYTICS_RETENTION_DAYS;
+  const retentionDays = RAW_ANALYTICS_RETENTION_DAYS;
 
   const activeSessionRetentionHours = getActiveSessionRetentionHours();
 
@@ -339,8 +340,16 @@ export async function runAnalyticsMaintenance(
     -(retentionDays - 1),
   );
 
-  const { dateValue: oldestRetainedDate, startAt: rawEventCutoff } =
+  const oldestDailyAnalyticsDateKey = addDays(
+    getCurrentLocalDateKey(),
+    -(DAILY_ANALYTICS_RETENTION_DAYS - 1),
+  );
+
+  const { startAt: rawEventCutoff } =
     getUtcRangeForLocalDate(oldestRetainedDateKey);
+
+  const { dateValue: oldestDailyAnalyticsDate } =
+    getUtcRangeForLocalDate(oldestDailyAnalyticsDateKey);
 
   const activeSessionCutoff = new Date(
     Date.now() - activeSessionRetentionHours * HOUR_IN_MS,
@@ -359,7 +368,7 @@ export async function runAnalyticsMaintenance(
       prisma.dailyAnalytics.deleteMany({
         where: {
           date: {
-            lt: oldestRetainedDate,
+            lt: oldestDailyAnalyticsDate,
           },
         },
       }),
@@ -377,6 +386,7 @@ export async function runAnalyticsMaintenance(
     ok: true,
     timezoneOffsetMinutes: getTimezoneOffsetMinutes(),
     retentionDays,
+    dailyAnalyticsRetentionDays: DAILY_ANALYTICS_RETENTION_DAYS,
     activeSessionRetentionHours,
     summarizedDays,
     deleted: {

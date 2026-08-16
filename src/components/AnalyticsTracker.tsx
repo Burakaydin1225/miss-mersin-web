@@ -54,28 +54,28 @@ export function AnalyticsTracker({
       });
     };
 
-    const intervalId = window.setInterval(sendHeartbeat, 30_000);
+    let lastHeartbeatAt = Date.now();
+
+    const intervalId = window.setInterval(() => {
+      lastHeartbeatAt = Date.now();
+      sendHeartbeat();
+    }, 120_000);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastHeartbeatAt >= 120_000
+      ) {
+        lastHeartbeatAt = Date.now();
         sendHeartbeat();
       }
     };
 
-    const handleFocus = () => {
-      sendHeartbeat();
-    };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    window.addEventListener("focus", handleFocus);
 
     return () => {
       window.clearInterval(intervalId);
-
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-
-      window.removeEventListener("focus", handleFocus);
     };
   }, [eventType, heartbeat, pathname, productId]);
 

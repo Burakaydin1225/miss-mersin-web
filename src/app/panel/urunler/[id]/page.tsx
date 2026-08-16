@@ -6,6 +6,7 @@ import { RenewSubscriptionForm } from "@/app/panel/urunler/[id]/RenewSubscriptio
 import {
   AnalyticsEventType,
   SubscriptionPaymentType,
+  UserRole,
 } from "@/generated/prisma/client";
 import {
   canWriteProducts,
@@ -389,6 +390,10 @@ export default async function ProductDetailPage({
   const canEdit =
   canWriteProducts(user.role);
 
+  const canCorrectFinancials =
+    user.role === UserRole.OWNER ||
+    user.role === UserRole.ADMIN;
+
   return (
     <section>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -584,6 +589,15 @@ export default async function ProductDetailPage({
                 <p className="mt-2 text-sm leading-6 text-neutral-600">
                   {subscriptionStatus.description}
                 </p>
+
+                {canCorrectFinancials ? (
+                  <Link
+                    href={`/panel/urunler/${product.id}/abonelik-duzenle`}
+                    className="mt-4 inline-flex items-center rounded-xl border border-neutral-300 bg-white/80 px-3 py-2 text-xs font-bold text-neutral-700 transition hover:border-neutral-950 hover:bg-neutral-950 hover:text-white"
+                  >
+                    Abonelik tarihlerini düzelt
+                  </Link>
+                ) : null}
               </div>
 
               {subscriptionStatus.remainingDays !==
@@ -670,14 +684,25 @@ export default async function ProductDetailPage({
                         </p>
                       </div>
 
-                      <p className="text-left text-base font-semibold text-green-700 sm:text-right">
-                        +
-                        {formatCurrency(
-                          decimalToNumber(
-                            payment.amount,
-                          ),
-                        )}
-                      </p>
+                      <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
+                        <p className="text-left text-base font-semibold text-green-700 sm:text-right">
+                          +
+                          {formatCurrency(
+                            decimalToNumber(
+                              payment.amount,
+                            ),
+                          )}
+                        </p>
+
+                        {canCorrectFinancials ? (
+                          <Link
+                            href={`/panel/odemeler/${payment.id}`}
+                            className="inline-flex h-8 items-center rounded-lg border border-neutral-200 bg-white px-2.5 text-[11px] font-bold text-neutral-600 transition hover:border-neutral-950 hover:bg-neutral-950 hover:text-white"
+                          >
+                            Düzenle
+                          </Link>
+                        ) : null}
+                      </div>
                     </article>
                   ),
                 )}

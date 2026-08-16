@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { TopProductsTable } from "@/components/panel/TopProductsTable";
+
 import {
   AnalyticsEventType,
   ProductCategory,
@@ -18,6 +20,7 @@ type DayChartData = {
   dateKey: string;
   label: string;
   pageViews: number;
+  productViews: number;
   whatsappClicks: number;
 };
 
@@ -231,8 +234,16 @@ function getBarHeight(value: number, maximumValue: number): number {
   return Math.max(7, Math.round((value / maximumValue) * 100));
 }
 
-export default async function PanelPage() {
+type PanelPageProps = {
+  searchParams?: Promise<{
+    range?: string;
+  }>;
+};
+
+export default async function PanelPage({ searchParams }: PanelPageProps) {
   const user = await requireUser();
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const chartRangeDays = resolvedSearchParams.range === "30" ? 30 : 7;
 
   const {
     now,
@@ -247,13 +258,11 @@ export default async function PanelPage() {
     timezoneOffsetMinutes,
   );
 
-  const sevenDayStartDate = addDays(todayDate, -6);
-
+  const chartStartDate = addDays(todayDate, -(chartRangeDays - 1));
   const sevenDayStartAt = addDays(todayStartAt, -6);
-
   const sevenDaysLater = addDays(now, 7);
 
-  const activeSessionThreshold = new Date(Date.now() - 2 * MINUTE_IN_MS);
+  const activeSessionThreshold = new Date(Date.now() - 5 * MINUTE_IN_MS);
 
   const [
     settings,
@@ -264,7 +273,8 @@ export default async function PanelPage() {
     todayWhatsappClicks,
     todayUniqueVisitors,
     activeVisitors,
-    sevenDayEvents,
+    rangeDailySummaries,
+    todayChartEvents,
     sevenDayProductTotals,
     activeSubscriptionSummary,
     thisMonthPaymentSummary,
@@ -348,14 +358,39 @@ export default async function PanelPage() {
       },
     }),
 
+    prisma.dailyAnalytics.findMany({
+      where: {
+        date: {
+          gte: chartStartDate,
+          lt: todayDate,
+        },
+        eventType: {
+          in: [
+            AnalyticsEventType.PAGE_VIEW,
+            AnalyticsEventType.PRODUCT_VIEW,
+            AnalyticsEventType.WHATSAPP_CLICK,
+          ],
+        },
+      },
+      select: {
+        date: true,
+        eventType: true,
+        eventCount: true,
+      },
+    }),
+
     prisma.analyticsEvent.findMany({
       where: {
         createdAt: {
-          gte: sevenDayStartAt,
+          gte: todayStartAt,
           lt: todayEndAt,
         },
         eventType: {
-          in: [AnalyticsEventType.PAGE_VIEW, AnalyticsEventType.WHATSAPP_CLICK],
+          in: [
+            AnalyticsEventType.PAGE_VIEW,
+            AnalyticsEventType.PRODUCT_VIEW,
+            AnalyticsEventType.WHATSAPP_CLICK,
+          ],
         },
       },
       select: {
@@ -531,9 +566,8 @@ export default async function PanelPage() {
 
   const chartByDate = new Map<string, DayChartData>();
 
-  for (let index = 0; index < 7; index += 1) {
-    const date = addDays(sevenDayStartDate, index);
-
+  for (let index = 0; index < chartRangeDays; index += 1) {
+    const date = addDays(chartStartDate, index);
     const dateKey = getDateKey(date);
 
     chartByDate.set(dateKey, {
@@ -541,26 +575,37 @@ export default async function PanelPage() {
       dateKey,
       label: getDayLabel(date),
       pageViews: 0,
+      productViews: 0,
       whatsappClicks: 0,
     });
   }
 
-  for (const row of sevenDayEvents) {
-    const dateKey = getLocalDateKeyFromTimestamp(
-      row.createdAt,
-      timezoneOffsetMinutes,
-    );
+  for (const row of rangeDailySummaries) {
+    const dateKey = getDateKey(row.date);
     const day = chartByDate.get(dateKey);
 
-    if (!day) {
-      continue;
+    if (!day) continue;
+
+    if (row.eventType === AnalyticsEventType.PAGE_VIEW) {
+      day.pageViews += row.eventCount;
+    } else if (row.eventType === AnalyticsEventType.PRODUCT_VIEW) {
+      day.productViews += row.eventCount;
+    } else if (row.eventType === AnalyticsEventType.WHATSAPP_CLICK) {
+      day.whatsappClicks += row.eventCount;
     }
+  }
+
+  for (const row of todayChartEvents) {
+    const dateKey = getLocalDateKeyFromTimestamp(row.createdAt, timezoneOffsetMinutes);
+    const day = chartByDate.get(dateKey);
+
+    if (!day) continue;
 
     if (row.eventType === AnalyticsEventType.PAGE_VIEW) {
       day.pageViews += 1;
-    }
-
-    if (row.eventType === AnalyticsEventType.WHATSAPP_CLICK) {
+    } else if (row.eventType === AnalyticsEventType.PRODUCT_VIEW) {
+      day.productViews += 1;
+    } else if (row.eventType === AnalyticsEventType.WHATSAPP_CLICK) {
       day.whatsappClicks += 1;
     }
   }
@@ -569,7 +614,7 @@ export default async function PanelPage() {
 
   const chartMaximum = Math.max(
     1,
-    ...chartData.flatMap((day) => [day.pageViews, day.whatsappClicks]),
+    ...chartData.flatMap((day) => [day.pageViews, day.productViews, day.whatsappClicks]),
   );
 
   const productAnalyticsMap = new Map<string, ProductAnalytics>();
@@ -639,12 +684,17 @@ export default async function PanelPage() {
     })
     .slice(0, 20);
 
-  const sevenDayPageViews = chartData.reduce(
+  const selectedRangePageViews = chartData.reduce(
     (total, day) => total + day.pageViews,
     0,
   );
 
-  const sevenDayWhatsappClicks = chartData.reduce(
+  const selectedRangeProductViews = chartData.reduce(
+    (total, day) => total + day.productViews,
+    0,
+  );
+
+  const selectedRangeWhatsappClicks = chartData.reduce(
     (total, day) => total + day.whatsappClicks,
     0,
   );
@@ -786,82 +836,62 @@ export default async function PanelPage() {
 
       <section>
         <div className="mb-4">
-          <h2 className="text-lg font-semibold text-neutral-950">
-            Gelir özeti
-          </h2>
-
+          <h2 className="text-lg font-semibold text-neutral-950">Finans özeti</h2>
           <p className="mt-1 text-sm text-neutral-500">
-            Abonelik ücretleri ve gerçek tahsilat kayıtları
+            Tahsilat ve aktif aboneliklerin güncel parasal görünümü
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <MetricCard
-            label="Beklenen aylık gelir"
-            value={formatCurrency(expectedMonthlyRevenue)}
-            description={`${formatNumber(
-              activeSubscriptionCount,
-            )} aktif abonelik`}
+            label="Bu ay tahsilat"
+            value={formatCurrency(thisMonthCollected)}
+            description={`${formatNumber(thisMonthPaymentSummary._count._all)} ödeme kaydı`}
             icon="₺"
             iconClassName="bg-emerald-50 text-emerald-700"
           />
-
           <MetricCard
-            label="Bu ay tahsil edilen"
-            value={formatCurrency(thisMonthCollected)}
-            description={`${formatNumber(
-              thisMonthPaymentSummary._count._all,
-            )} ödeme kaydı`}
+            label="Aktif abonelik değeri"
+            value={formatCurrency(expectedMonthlyRevenue)}
+            description={`${formatNumber(activeSubscriptionCount)} aktif ilanın kayıtlı abonelik ücretleri toplamı`}
             icon="A"
             iconClassName="bg-blue-50 text-blue-700"
           />
-
           <MetricCard
-            label="Toplam kazanç"
+            label="Tüm zamanlar tahsilat"
             value={formatCurrency(totalCollected)}
-            description={`${formatNumber(
-              totalPaymentSummary._count._all,
-            )} toplam ödeme`}
+            description={`${formatNumber(totalPaymentSummary._count._all)} toplam ödeme`}
             icon="T"
             iconClassName="bg-violet-50 text-violet-700"
-          />
-
-          <MetricCard
-            label="Yaklaşan yenileme"
-            value={formatNumber(expiringSoonCount)}
-            description={`${formatNumber(
-              expiredSubscriptionCount,
-            )} süresi dolmuş ürün`}
-            icon="S"
-            iconClassName="bg-orange-50 text-orange-700"
           />
         </div>
       </section>
 
-      <section className="rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/[0.05] sm:p-7">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <details className="group rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/[0.05] sm:p-7">
+        <summary className="flex cursor-pointer list-none flex-col gap-4 sm:flex-row sm:items-center sm:justify-between [&::-webkit-details-marker]:hidden">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-lg font-semibold text-neutral-950">
-                Abonelik takibi
-              </h2>
-
+              <h2 className="text-lg font-semibold text-neutral-950">Abonelik takibi</h2>
               {subscriptionAlerts.length > 0 ? (
                 <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-[10px] font-bold text-orange-700">
                   {formatNumber(subscriptionAlerts.length)} işlem bekliyor
                 </span>
               ) : null}
             </div>
-
             <p className="mt-1 text-sm text-neutral-500">
               Süresi dolan ve 7 gün içinde yenilenmesi gereken ürünler
             </p>
           </div>
 
-          <Link
-            href="/panel/urunler"
-            className="text-sm font-semibold text-neutral-700 transition hover:text-neutral-950"
-          >
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-semibold text-neutral-500 group-open:hidden">Listeyi aç</span>
+            <span className="hidden text-xs font-semibold text-neutral-500 group-open:inline">Listeyi kapat</span>
+            <span className="flex size-9 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-500 transition group-open:rotate-180">↓</span>
+          </div>
+        </summary>
+
+        <div className="mt-5 flex justify-end">
+          <Link href="/panel/urunler" className="text-sm font-semibold text-neutral-700 transition hover:text-neutral-950">
             Tüm ürünleri görüntüle →
           </Link>
         </div>
@@ -962,7 +992,7 @@ export default async function PanelPage() {
             </p>
           </div>
         )}
-      </section>
+      </details>
 
       <section>
         <div className="mb-4">
@@ -1001,9 +1031,9 @@ export default async function PanelPage() {
           />
 
           <MetricCard
-            label="Şu anda aktif"
+            label="Yakın zamanda aktif"
             value={formatNumber(activeVisitors.length)}
-            description="Son 2 dakika içinde"
+            description="Son 5 dakika içinde"
             icon="A"
             iconClassName="bg-orange-50 text-orange-700"
             live
@@ -1015,129 +1045,73 @@ export default async function PanelPage() {
         <div className="min-w-0 rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/[0.05] sm:p-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-neutral-950">
-                Son 7 gün
-              </h2>
-
+              <h2 className="text-lg font-semibold text-neutral-950">Performans</h2>
               <p className="mt-1 text-sm text-neutral-500">
-                Sayfa görüntüleme ve WhatsApp tıklama hareketleri
+                Sayfa, ürün ve WhatsApp hareketlerini dönemsel karşılaştır
               </p>
             </div>
-
-            <div className="flex flex-wrap gap-4 text-xs text-neutral-500">
-              <span className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-neutral-900" />
-                Sayfa görüntüleme
-              </span>
-
-              <span className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-[#1fa855]" />
-                WhatsApp
-              </span>
+            <div className="flex rounded-xl bg-neutral-100 p-1">
+              <Link href="/panel?range=7" className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${chartRangeDays === 7 ? "bg-white text-neutral-950 shadow-sm" : "text-neutral-500 hover:text-neutral-900"}`}>
+                7 gün
+              </Link>
+              <Link href="/panel?range=30" className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${chartRangeDays === 30 ? "bg-white text-neutral-950 shadow-sm" : "text-neutral-500 hover:text-neutral-900"}`}>
+                30 gün
+              </Link>
             </div>
           </div>
 
-          <div className="mt-8 overflow-x-auto pb-2">
-            <div className="grid min-w-[600px] grid-cols-7 gap-3">
+          <div className="mt-5 flex flex-wrap gap-4 text-xs text-neutral-500">
+            <span className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-neutral-900" />Sayfa görüntüleme</span>
+            <span className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-violet-500" />Ürün görüntüleme</span>
+            <span className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-[#1fa855]" />WhatsApp</span>
+          </div>
+
+          <div className="mt-7 overflow-x-auto pb-2">
+            <div className="grid min-w-[720px] gap-2" style={{ gridTemplateColumns: `repeat(${chartRangeDays}, minmax(${chartRangeDays === 30 ? "22px" : "72px"}, 1fr))` }}>
               {chartData.map((day) => (
                 <div key={day.dateKey} className="flex min-w-0 flex-col">
-                  <div className="mb-3 text-center">
-                    <p className="text-xs font-semibold text-neutral-800">
-                      {formatNumber(day.pageViews)}
-                    </p>
-
-                    <p className="mt-0.5 text-[10px] text-green-700">
-                      {day.whatsappClicks} WP
-                    </p>
+                  <div className="mb-2 text-center">
+                    <p className="text-[10px] font-semibold text-neutral-700">{formatNumber(day.pageViews)}</p>
+                    {chartRangeDays === 7 ? <p className="text-[9px] text-neutral-400">{day.productViews} Ü · {day.whatsappClicks} W</p> : null}
                   </div>
-
-                  <div className="flex h-48 items-end justify-center gap-1 rounded-2xl bg-neutral-50 px-3 pt-4">
-                    <div
-                      title={`${day.pageViews} sayfa görüntüleme`}
-                      className="w-4 rounded-t-md bg-neutral-900 transition-all"
-                      style={{
-                        height: `${getBarHeight(day.pageViews, chartMaximum)}%`,
-                      }}
-                    />
-
-                    <div
-                      title={`${day.whatsappClicks} WhatsApp tıklaması`}
-                      className="w-4 rounded-t-md bg-[#1fa855] transition-all"
-                      style={{
-                        height: `${getBarHeight(
-                          day.whatsappClicks,
-                          chartMaximum,
-                        )}%`,
-                      }}
-                    />
+                  <div className="flex h-52 items-end justify-center gap-1 rounded-xl bg-neutral-50 px-1.5 pt-4">
+                    <div title={`${day.pageViews} sayfa görüntüleme`} className="w-2.5 rounded-t bg-neutral-900" style={{ height: `${getBarHeight(day.pageViews, chartMaximum)}%` }} />
+                    <div title={`${day.productViews} ürün görüntüleme`} className="w-2.5 rounded-t bg-violet-500" style={{ height: `${getBarHeight(day.productViews, chartMaximum)}%` }} />
+                    <div title={`${day.whatsappClicks} WhatsApp tıklaması`} className="w-2.5 rounded-t bg-[#1fa855]" style={{ height: `${getBarHeight(day.whatsappClicks, chartMaximum)}%` }} />
                   </div>
-
-                  <p className="mt-3 truncate text-center text-[11px] font-medium capitalize text-neutral-500">
-                    {day.label}
+                  <p className="mt-2 truncate text-center text-[9px] font-medium capitalize text-neutral-500">
+                    {chartRangeDays === 30 ? day.dateKey.slice(8, 10) : day.label}
                   </p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 border-t border-neutral-100 pt-5 sm:grid-cols-2">
-            <SummaryValue
-              label="7 günlük sayfa görüntüleme"
-              value={formatNumber(sevenDayPageViews)}
-            />
-
-            <SummaryValue
-              label="7 günlük WhatsApp tıklaması"
-              value={formatNumber(sevenDayWhatsappClicks)}
-            />
+          <div className="mt-6 grid gap-3 border-t border-neutral-100 pt-5 sm:grid-cols-3">
+            <SummaryValue label={`${chartRangeDays} günlük sayfa görüntüleme`} value={formatNumber(selectedRangePageViews)} />
+            <SummaryValue label={`${chartRangeDays} günlük ürün görüntüleme`} value={formatNumber(selectedRangeProductViews)} />
+            <SummaryValue label={`${chartRangeDays} günlük WhatsApp`} value={formatNumber(selectedRangeWhatsappClicks)} />
           </div>
+
+          {chartRangeDays === 30 ? (
+            <p className="mt-4 text-xs leading-5 text-neutral-400">
+              30 günlük görünüm günlük özet kayıtlarını kullanır. Eski özetler daha önce silindiyse grafik kademeli olarak dolacaktır.
+            </p>
+          ) : null}
         </div>
 
         <div className="rounded-[28px] bg-neutral-950 p-6 text-white shadow-sm sm:p-7">
-          <p className="text-sm font-medium text-white/60">
-            Ürün ve abonelik durumu
-          </p>
-
-          <p className="mt-3 text-4xl font-semibold tracking-[-0.04em]">
-            {formatNumber(activeSubscriptionCount)}
-          </p>
-
+          <p className="text-sm font-medium text-white/60">Ürün ve abonelik durumu</p>
+          <p className="mt-3 text-4xl font-semibold tracking-[-0.04em]">{formatNumber(activeSubscriptionCount)}</p>
           <p className="mt-1 text-sm text-white/60">aktif abonelik</p>
-
           <div className="mt-8 space-y-4">
-            <StatusRow
-              label="Toplam ürün"
-              value={formatNumber(totalProducts)}
-            />
-
-            <StatusRow
-              label="Yayınlanan ürün"
-              value={formatNumber(activeProducts)}
-            />
-
-            <StatusRow
-              label="Pasif ürün"
-              value={formatNumber(totalProducts - activeProducts)}
-            />
-
-            <StatusRow
-              label="7 gün içinde bitecek"
-              value={formatNumber(expiringSoonCount)}
-              valueClassName="text-orange-300"
-            />
-
-            <StatusRow
-              label="Süresi dolmuş"
-              value={formatNumber(expiredSubscriptionCount)}
-              valueClassName="text-red-300"
-              last
-            />
+            <StatusRow label="Toplam ürün" value={formatNumber(totalProducts)} />
+            <StatusRow label="Yayınlanan ürün" value={formatNumber(activeProducts)} />
+            <StatusRow label="Pasif ürün" value={formatNumber(totalProducts - activeProducts)} />
+            <StatusRow label="7 gün içinde bitecek" value={formatNumber(expiringSoonCount)} valueClassName="text-orange-300" />
+            <StatusRow label="Süresi dolmuş" value={formatNumber(expiredSubscriptionCount)} valueClassName="text-red-300" last />
           </div>
-
-          <Link
-            href="/panel/urunler"
-            className="mt-8 flex h-12 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-100"
-          >
+          <Link href="/panel/urunler" className="mt-8 flex h-12 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-100">
             Ürünleri yönet
           </Link>
         </div>
@@ -1297,113 +1271,12 @@ export default async function PanelPage() {
         </div>
       </section>
 
-      <section className="rounded-[28px] bg-white p-5 shadow-sm ring-1 ring-black/[0.05] sm:p-7">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-neutral-950">
-              En çok incelenen ürünler
-            </h2>
-
-            <p className="mt-1 text-sm text-neutral-500">
-              Son 7 günün gerçek verileri
-            </p>
-          </div>
-
-          <span className="text-xs text-neutral-400">
-            En fazla 20 ürün gösteriliyor
-          </span>
-        </div>
-
-        {topProducts.length > 0 ? (
-          <div className="mt-6 overflow-hidden rounded-2xl border border-neutral-100">
-            <div className="hidden grid-cols-[minmax(0,1fr)_120px_120px_120px] gap-4 bg-neutral-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-400 sm:grid">
-              <span>Ürün</span>
-
-              <span className="text-right">Görüntüleme</span>
-
-              <span className="text-right">WhatsApp</span>
-
-              <span className="text-right">Dönüşüm</span>
-            </div>
-
-            <div className="divide-y divide-neutral-100">
-              {topProducts.map((product, index) => {
-                const content = (
-                  <>
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-xs font-semibold text-neutral-500">
-                        {index + 1}
-                      </span>
-
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-neutral-900">
-                          {product.productName}
-                        </p>
-
-                        <p className="mt-0.5 text-xs text-neutral-400">
-                          {product.slug
-                            ? "Ürün detayını aç"
-                            : "Silinmiş ürün kaydı"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-3 sm:contents">
-                      <StatisticCell
-                        label="Görüntüleme"
-                        value={formatNumber(product.views)}
-                      />
-
-                      <StatisticCell
-                        label="WhatsApp"
-                        value={formatNumber(product.clicks)}
-                      />
-
-                      <StatisticCell
-                        label="Dönüşüm"
-                        value={formatPercentage(product.clicks, product.views)}
-                        highlighted
-                      />
-                    </div>
-                  </>
-                );
-
-                if (product.slug) {
-                  return (
-                    <Link
-                      key={product.productId}
-                      href={`/urun/${product.slug}`}
-                      target="_blank"
-                      className="grid gap-4 px-4 py-4 transition hover:bg-neutral-50 sm:grid-cols-[minmax(0,1fr)_120px_120px_120px] sm:items-center sm:px-5"
-                    >
-                      {content}
-                    </Link>
-                  );
-                }
-
-                return (
-                  <div
-                    key={product.productId}
-                    className="grid gap-4 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_120px_120px_120px] sm:items-center sm:px-5"
-                  >
-                    {content}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-6 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-5 py-12 text-center">
-            <p className="text-sm font-medium text-neutral-700">
-              Henüz ürün istatistiği yok
-            </p>
-
-            <p className="mt-2 text-xs text-neutral-500">
-              Ürünler ziyaret edildikçe veriler burada gösterilecek.
-            </p>
-          </div>
-        )}
-      </section>
+      <TopProductsTable
+        products={topProducts.map((product) => ({
+          ...product,
+          conversion: product.views > 0 ? (product.clicks / product.views) * 100 : 0,
+        }))}
+      />
     </div>
   );
 }
@@ -1469,34 +1342,6 @@ function SummaryValue({ label, value }: SummaryValueProps) {
       <p className="text-xs text-neutral-500">{label}</p>
 
       <p className="mt-2 text-xl font-semibold text-neutral-950">{value}</p>
-    </div>
-  );
-}
-
-type StatisticCellProps = {
-  label: string;
-  value: string;
-  highlighted?: boolean;
-};
-
-function StatisticCell({
-  label,
-  value,
-  highlighted = false,
-}: StatisticCellProps) {
-  return (
-    <div className="text-left sm:text-right">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-neutral-400 sm:hidden">
-        {label}
-      </p>
-
-      <p
-        className={`mt-1 text-sm font-semibold sm:mt-0 ${
-          highlighted ? "text-green-700" : "text-neutral-800"
-        }`}
-      >
-        {value}
-      </p>
     </div>
   );
 }

@@ -52,7 +52,6 @@ type ProductFormValues = {
   subscriptionFee: string;
   initialSubscriptionDuration:
     SubscriptionRenewalDuration | null;
-  initialPaymentAmount: string | null;
   isActive: boolean;
 };
 
@@ -921,7 +920,6 @@ function readProductForm(
       sortOrder: sortOrderValue,
       subscriptionFee,
       initialSubscriptionDuration,
-      initialPaymentAmount,
       isActive,
     },
   };
@@ -1128,20 +1126,27 @@ export async function createProductAction(
     };
   }
 
-  if (
-    values.initialPaymentAmount === null
-  ) {
-    return {
-      error:
-        "Geçerli bir ilk ödeme tutarı girin.",
-    };
-  }
-
   const initialSubscriptionDuration =
     values.initialSubscriptionDuration;
 
+  /*
+   * İş kuralı:
+   * Ürün oluşturulurken "subscriptionFee" alanına
+   * girilen tutar müşteriden tahsil edilmiş abonelik
+   * bedelidir. İlk ödeme kaydı da aynı tutarla oluşur.
+   *
+   * Böylece ürünün abonelik değeri ile ilk tahsilat
+   * birbirinden kopmaz.
+   */
   const initialPaymentAmount =
-    values.initialPaymentAmount;
+    values.subscriptionFee;
+
+  if (Number(initialPaymentAmount) <= 0) {
+    return {
+      error:
+        "Abonelik ücreti sıfırdan büyük olmalıdır.",
+    };
+  }
 
   const uploadedImageUrls = [
     values.coverImage,
@@ -1306,7 +1311,7 @@ export async function createProductAction(
               paidAt:
                 subscriptionPeriodStart,
               note:
-                `Ürün oluşturulurken alınan ${initialDurationLabel} ilk abonelik ödemesi.`,
+                `Ürün oluşturulurken tahsil edilen ${initialDurationLabel} abonelik ücreti.`,
             },
           });
         }
@@ -1345,6 +1350,8 @@ export async function createProductAction(
             initialSubscriptionDurationLabel:
               initialDurationLabel,
             initialPaymentAmount,
+            initialPaymentSource:
+              "subscriptionFee",
             subscriptionEndsAt:
               product.subscriptionEndsAt?.toISOString() ??
               null,

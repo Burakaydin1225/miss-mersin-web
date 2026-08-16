@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Link from "next/link";
 
 import { logoutAction } from "@/app/panel/actions";
+import { PanelSidebar } from "@/components/panel/PanelSidebar";
 import { UserRole } from "@/generated/prisma/client";
 import {
   isAdmin,
@@ -29,139 +29,107 @@ const roleLabels: Record<UserRole, string> = {
 
 const roleBadgeClassNames: Record<UserRole, string> = {
   [UserRole.OWNER]:
-    "border-violet-200 bg-violet-50 text-violet-700",
+    "border-violet-300/30 bg-violet-400/10 text-violet-200",
   [UserRole.ADMIN]:
-    "border-blue-200 bg-blue-50 text-blue-700",
+    "border-blue-300/30 bg-blue-400/10 text-blue-200",
   [UserRole.EDITOR]:
-    "border-amber-200 bg-amber-50 text-amber-700",
+    "border-amber-300/30 bg-amber-400/10 text-amber-200",
   [UserRole.VIEWER]:
-    "border-neutral-200 bg-neutral-50 text-neutral-600",
+    "border-white/15 bg-white/5 text-white/60",
 };
 
 type PanelLayoutProps = {
   children: ReactNode;
 };
 
-const navigationLinkClassName =
-  "shrink-0 rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-950";
-
 export default async function PanelLayout({
   children,
 }: PanelLayoutProps) {
   const user = await requireUser();
 
-  const canManageUsers =
-    isAdmin(user.role);
+  const canManageUsers = isAdmin(user.role);
+  const canManageCategorySlots = isAdmin(user.role);
+  const canManageSiteSettings = isAdmin(user.role);
+  const canViewSystemLogs = isOwner(user.role);
 
-  const canManageCategorySlots =
-    isAdmin(user.role);
-
-  const canManageSiteSettings =
-    isAdmin(user.role);
-
-  const canViewSystemLogs =
-    isOwner(user.role);
+  const items = [
+    {
+      href: "/panel",
+      label: "Genel Bakış",
+      icon: "G",
+    },
+    {
+      href: "/panel/urunler",
+      label: "Ürünler",
+      icon: "Ü",
+    },
+    ...(canManageSiteSettings
+      ? [
+          {
+            href: "/panel/odemeler",
+            label: "Ödemeler",
+            icon: "₺",
+          },
+        ]
+      : []),
+    ...(canManageCategorySlots
+      ? [
+          {
+            href: "/panel/kategori-alanlari",
+            label: "Kategori Alanları",
+            icon: "K",
+          },
+        ]
+      : []),
+    ...(canManageSiteSettings
+      ? [
+          {
+            href: "/panel/site-ayarlari",
+            label: "Site Ayarları",
+            icon: "S",
+          },
+        ]
+      : []),
+    {
+      href: "/panel/hesabim",
+      label: "Hesabım",
+      icon: "H",
+    },
+    ...(canManageUsers
+      ? [
+          {
+            href: "/panel/kullanicilar",
+            label: "Kullanıcılar",
+            icon: "K",
+          },
+        ]
+      : []),
+    ...(canViewSystemLogs
+      ? [
+          {
+            href: "/panel/sistem-hareketleri",
+            label: "Sistem Hareketleri",
+            icon: "L",
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="min-h-screen bg-[#f4f4f0]">
-      <header className="border-b border-black/[0.06] bg-white">
-        <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link
-            href="/panel/hesabim"
-            className="min-w-0 rounded-xl transition hover:opacity-75"
-          >
-            <p className="text-sm font-semibold text-neutral-950">
-              Katalog Yönetimi
-            </p>
+      <PanelSidebar
+        userName={user.name}
+        roleLabel={roleLabels[user.role]}
+        roleClassName={roleBadgeClassNames[user.role]}
+        items={items}
+        logoutAction={logoutAction}
+      />
 
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <p className="truncate text-xs text-neutral-500">
-                {user.name}
-              </p>
-
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] ${roleBadgeClassNames[user.role]}`}
-              >
-                {roleLabels[user.role]}
-              </span>
-            </div>
-          </Link>
-
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
-            >
-              Çıkış yap
-            </button>
-          </form>
-        </div>
-
-        <nav className="border-t border-neutral-100">
-          <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-2 sm:px-6">
-            <Link
-              href="/panel"
-              className={navigationLinkClassName}
-            >
-              Genel Bakış
-            </Link>
-
-            <Link
-              href="/panel/urunler"
-              className={navigationLinkClassName}
-            >
-              Ürünler
-            </Link>
-
-            {canManageCategorySlots ? (
-              <Link
-                href="/panel/kategori-alanlari"
-                className={navigationLinkClassName}
-              >
-                Kategori Alanları
-              </Link>
-            ) : null}
-
-            {canManageSiteSettings ? (
-              <Link
-                href="/panel/site-ayarlari"
-                className={navigationLinkClassName}
-              >
-                Site Ayarları
-              </Link>
-            ) : null}
-
-            <Link
-              href="/panel/hesabim"
-              className={navigationLinkClassName}
-            >
-              Hesabım
-            </Link>
-
-            {canManageUsers ? (
-              <Link
-                href="/panel/kullanicilar"
-                className={navigationLinkClassName}
-              >
-                Kullanıcılar
-              </Link>
-            ) : null}
-
-            {canViewSystemLogs ? (
-              <Link
-                href="/panel/sistem-hareketleri"
-                className={navigationLinkClassName}
-              >
-                Sistem Hareketleri
-              </Link>
-            ) : null}
-          </div>
-        </nav>
-      </header>
-
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        {children}
-      </main>
+      <div className="lg:pl-[248px]">
+        <main className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

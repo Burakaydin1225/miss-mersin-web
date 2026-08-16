@@ -18,7 +18,6 @@ import {
   type OccupiedPositionsByCategory,
   type ProductCategoryValue,
 } from "@/lib/product-categories";
-import { productRegions } from "@/lib/product-regions";
 
 type ProductFormProduct = {
   id: string;
@@ -27,16 +26,7 @@ type ProductFormProduct = {
   description: string;
   detailTable?: unknown;
   coverImage: string;
-  cardTag: string | null;
-  region: string | null;
   whatsappNumber: string | null;
-  whatsappButtons?: {
-    id: string;
-    label: string;
-    phoneNumber: string;
-    sortOrder: number;
-    isActive: boolean;
-  }[];
   category: ProductCategoryValue;
   sortOrder: number;
   subscriptionFee: unknown;
@@ -76,17 +66,10 @@ type DetailTableState = {
   rows: string[][];
 };
 
-type WhatsappButtonState = {
-  label: string;
-  phoneNumber: string;
-  isActive: boolean;
-};
-
 const initialState: ProductFormState = {};
 
 const MINIMUM_TABLE_ROWS = 2;
 const MAXIMUM_TABLE_ROWS = 12;
-const MAXIMUM_WHATSAPP_BUTTONS = 12;
 
 const initialSubscriptionOptions: InitialSubscriptionOption[] = [
   {
@@ -326,47 +309,6 @@ function getInitialDetailTable(
   };
 }
 
-
-function getInitialWhatsappButtons(
-  product?: ProductFormProduct,
-): WhatsappButtonState[] {
-  if (
-    product?.whatsappButtons &&
-    product.whatsappButtons.length > 0
-  ) {
-    return product.whatsappButtons
-      .filter((button) => button.isActive)
-      .sort(
-        (firstButton, secondButton) =>
-          firstButton.sortOrder -
-          secondButton.sortOrder,
-      )
-      .map((button) => ({
-        label: button.label,
-        phoneNumber: button.phoneNumber,
-        isActive: button.isActive,
-      }));
-  }
-
-  if (product?.whatsappNumber) {
-    return [
-      {
-        label: "WhatsApp ile bilgi al",
-        phoneNumber: product.whatsappNumber,
-        isActive: true,
-      },
-    ];
-  }
-
-  return [
-    {
-      label: "WhatsApp ile bilgi al",
-      phoneNumber: "",
-      isActive: true,
-    },
-  ];
-}
-
 export function ProductForm({
   product,
   defaultSortOrder = 1,
@@ -461,13 +403,6 @@ export function ProductForm({
       initialDetailTable.rows,
     );
 
-  const [
-    whatsappButtons,
-    setWhatsappButtons,
-  ] = useState<WhatsappButtonState[]>(
-    getInitialWhatsappButtons(product),
-  );
-
   const action = product
     ? updateProductAction.bind(null, product.id)
     : createProductAction;
@@ -538,28 +473,6 @@ export function ProductForm({
           ),
         })
       : "";
-
-  const serializedWhatsappButtons =
-    JSON.stringify(
-      whatsappButtons.map(
-        (button, buttonIndex) => ({
-          label: button.label,
-          phoneNumber:
-            button.phoneNumber,
-          isActive:
-            button.isActive,
-          sortOrder:
-            buttonIndex,
-        }),
-      ),
-    );
-
-  const primaryWhatsappNumber =
-    whatsappButtons.find(
-      (button) =>
-        button.isActive &&
-        button.phoneNumber.trim(),
-    )?.phoneNumber ?? "";
 
   const previewRows =
     detailTableRows.filter((row) =>
@@ -776,70 +689,6 @@ export function ProductForm({
     });
   }
 
-  function addWhatsappButton() {
-    setWhatsappButtons((currentButtons) => {
-      if (
-        currentButtons.length >=
-        MAXIMUM_WHATSAPP_BUTTONS
-      ) {
-        return currentButtons;
-      }
-
-      return [
-        ...currentButtons,
-        {
-          label: `WhatsApp ${currentButtons.length + 1}`,
-          phoneNumber: "",
-          isActive: true,
-        },
-      ];
-    });
-  }
-
-  function removeWhatsappButton(
-    buttonIndex: number,
-  ) {
-    setWhatsappButtons((currentButtons) => {
-      if (currentButtons.length <= 1) {
-        return [
-          {
-            label: "WhatsApp ile bilgi al",
-            phoneNumber: "",
-            isActive: true,
-          },
-        ];
-      }
-
-      return currentButtons.filter(
-        (_, currentButtonIndex) =>
-          currentButtonIndex !== buttonIndex,
-      );
-    });
-  }
-
-  function updateWhatsappButton(
-    buttonIndex: number,
-    field: keyof WhatsappButtonState,
-    value: string | boolean,
-  ) {
-    setWhatsappButtons((currentButtons) =>
-      currentButtons.map(
-        (button, currentButtonIndex) => {
-          if (
-            currentButtonIndex !== buttonIndex
-          ) {
-            return button;
-          }
-
-          return {
-            ...button,
-            [field]: value,
-          };
-        },
-      ),
-    );
-  }
-
   return (
     <form
       action={formAction}
@@ -849,18 +698,6 @@ export function ProductForm({
         type="hidden"
         name="detailTable"
         value={serializedDetailTable}
-      />
-
-      <input
-        type="hidden"
-        name="whatsappButtons"
-        value={serializedWhatsappButtons}
-      />
-
-      <input
-        type="hidden"
-        name="whatsappNumber"
-        value={primaryWhatsappNumber}
       />
 
       <ProductImageUploader
@@ -916,69 +753,6 @@ export function ProductForm({
               className={textareaClassName}
               placeholder="Ana sayfadaki ürün kartında görünecek kısa açıklama"
             />
-          </div>
-
-          <div>
-            <label
-              htmlFor="cardTag"
-              className="text-sm font-medium text-neutral-700"
-            >
-              Kart etiketi
-            </label>
-
-            <input
-              id="cardTag"
-              name="cardTag"
-              type="text"
-              maxLength={40}
-              defaultValue={
-                product?.cardTag ?? ""
-              }
-              className={inputClassName}
-              placeholder="Örn. İstanbul Avrupa Yakası"
-            />
-
-            <p className="mt-2 text-xs leading-5 text-neutral-500">
-              Anasayfadaki ürün kartının sağ üstünde
-              daha geniş parlak etiket olarak görünür. Boş
-              bırakırsanız etiket gösterilmez.
-            </p>
-          </div>
-
-
-          <div>
-            <label
-              htmlFor="region"
-              className="text-sm font-medium text-neutral-700"
-            >
-              Bölge
-            </label>
-
-            <select
-              id="region"
-              name="region"
-              defaultValue={product?.region ?? ""}
-              className={inputClassName}
-            >
-              <option value="">
-                Bölge seçilmedi
-              </option>
-
-              {productRegions.map((region) => (
-                <option
-                  key={region.slug}
-                  value={region.slug}
-                >
-                  {region.shortName}
-                </option>
-              ))}
-            </select>
-
-            <p className="mt-2 text-xs leading-5 text-neutral-500">
-              Bu alan ana sayfadaki kartta gösterilmez.
-              Sadece ürün detayında ve bölge SEO
-              sayfalarında kullanılır.
-            </p>
           </div>
 
           <div>
@@ -1612,152 +1386,42 @@ export function ProductForm({
       </section>
 
       <section className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-black/[0.05] sm:p-7">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-neutral-950">
-              WhatsApp butonları
-            </h2>
+        <h2 className="text-base font-semibold text-neutral-950">
+          WhatsApp iletişimi
+        </h2>
 
-            <p className="mt-2 max-w-2xl text-xs leading-5 text-neutral-500">
-              Bu ilana özel istediğiniz kadar WhatsApp
-              butonu ekleyebilirsiniz. Her buton farklı
-              bir numaraya yönlenebilir. Numarası boş
-              kalan satırlar kaydedilmez.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={addWhatsappButton}
-            disabled={
-              whatsappButtons.length >=
-              MAXIMUM_WHATSAPP_BUTTONS
-            }
-            className="h-11 rounded-xl border border-neutral-200 bg-neutral-950 px-4 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            + Buton ekle
-          </button>
-        </div>
-
-        <div className="mt-6 space-y-4">
-          {whatsappButtons.map(
-            (button, buttonIndex) => (
-              <div
-                key={`whatsapp-button-${buttonIndex}`}
-                className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4"
-              >
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-neutral-900">
-                      {buttonIndex + 1}. WhatsApp butonu
-                    </p>
-
-                    <p className="mt-1 text-xs text-neutral-500">
-                      Detay sayfasında bu sırayla
-                      gösterilir.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      removeWhatsappButton(
-                        buttonIndex,
-                      )
-                    }
-                    className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
-                  >
-                    Sil
-                  </button>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-                  <div>
-                    <label
-                      htmlFor={`whatsappButtonLabel-${buttonIndex}`}
-                      className="text-sm font-medium text-neutral-700"
-                    >
-                      Buton başlığı
-                    </label>
-
-                    <input
-                      id={`whatsappButtonLabel-${buttonIndex}`}
-                      type="text"
-                      value={button.label}
-                      onChange={(event) =>
-                        updateWhatsappButton(
-                          buttonIndex,
-                          "label",
-                          event.target.value,
-                        )
-                      }
-                      className={inputClassName}
-                      placeholder="WhatsApp ile bilgi al"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor={`whatsappButtonPhone-${buttonIndex}`}
-                      className="text-sm font-medium text-neutral-700"
-                    >
-                      Telefon numarası
-                    </label>
-
-                    <input
-                      id={`whatsappButtonPhone-${buttonIndex}`}
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      value={button.phoneNumber}
-                      onChange={(event) =>
-                        updateWhatsappButton(
-                          buttonIndex,
-                          "phoneNumber",
-                          event.target.value,
-                        )
-                      }
-                      className={inputClassName}
-                      placeholder="+90 555 555 55 55"
-                    />
-                  </div>
-                </div>
-
-                <label className="mt-4 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-800">
-                      Buton aktif
-                    </p>
-
-                    <p className="mt-1 text-xs text-neutral-500">
-                      Kapalıysa ürün detayında
-                      gösterilmez.
-                    </p>
-                  </div>
-
-                  <input
-                    type="checkbox"
-                    checked={button.isActive}
-                    onChange={(event) =>
-                      updateWhatsappButton(
-                        buttonIndex,
-                        "isActive",
-                        event.target.checked,
-                      )
-                    }
-                    className="size-5 accent-neutral-950"
-                  />
-                </label>
-              </div>
-            ),
-          )}
-        </div>
-
-        <p className="mt-4 text-xs leading-5 text-neutral-500">
-          Üründe aktif WhatsApp butonu yoksa detay
-          sayfasında genel site WhatsApp numarası
-          kullanılabilir.
+        <p className="mt-2 text-xs leading-5 text-neutral-500">
+          Bu ürüne özel WhatsApp numarası
+          tanımlayabilirsiniz. Boş bırakılırsa genel
+          site numarası kullanılır.
         </p>
+
+        <div className="mt-6">
+          <label
+            htmlFor="whatsappNumber"
+            className="text-sm font-medium text-neutral-700"
+          >
+            Ürüne özel WhatsApp numarası
+          </label>
+
+          <input
+            id="whatsappNumber"
+            name="whatsappNumber"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            defaultValue={
+              product?.whatsappNumber ?? ""
+            }
+            className={inputClassName}
+            placeholder="+90 555 555 55 55"
+          />
+
+          <p className="mt-2 text-xs leading-5 text-neutral-500">
+            Numarayı 0555, 555 veya +90 ile
+            başlayacak biçimde girebilirsiniz.
+          </p>
+        </div>
       </section>
 
       <section className="rounded-[24px] bg-white p-5 shadow-sm ring-1 ring-black/[0.05] sm:p-7">
@@ -1776,7 +1440,7 @@ export function ProductForm({
             htmlFor="subscriptionFee"
             className="text-sm font-medium text-neutral-700"
           >
-            Aylık abonelik ücreti
+            Abonelik ücreti / tahsil edilen tutar
           </label>
 
           <div className="relative">
@@ -1802,9 +1466,10 @@ export function ProductForm({
           </div>
 
           <p className="mt-2 text-xs leading-5 text-neutral-500">
-            Bu tutar ürünün standart aylık
-            fiyatıdır. Örnek: 1500, 1.500 veya
-            1500,50
+            Müşteriden bu abonelik dönemi için
+            aldığınız gerçek tutarı girin. Yeni ürün
+            oluşturulduğunda aynı tutar otomatik olarak
+            ödeme geçmişine kaydedilir.
           </p>
         </div>
 
@@ -1927,13 +1592,13 @@ export function ProductForm({
               <p className="text-sm font-semibold text-blue-950">
                 {product
                   ? "Güncel abonelik bedeli"
-                  : "İlk abonelik kaydı"}
+                  : "İlk abonelik ve tahsilat kaydı"}
               </p>
 
               <p className="mt-1 text-xs leading-5 text-blue-800">
                 {product
-                  ? "Bu alanı değiştirmek yalnızca ürünün standart aylık ücretini değiştirir. Yeni ödeme kaydı oluşturmaz."
-                  : "Ürün seçilen süreyle aktif edilir. İlk alınan ödeme tutarı sıfırdan büyükse ödeme geçmişine kaydedilir."}
+                  ? "Bu alanı mevcut üründe değiştirmek yalnızca ürünün kayıtlı abonelik ücretini değiştirir. Yeni ödeme oluşturmaz; yeni tahsilat için abonelik yenileme ekranını kullanın."
+                  : "Ürün seçilen süreyle aktif edilir ve yukarıdaki abonelik ücreti aynı tutarla ilk tahsilat olarak ödeme geçmişine kaydedilir."}
               </p>
             </div>
           </div>
