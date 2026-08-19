@@ -26,6 +26,7 @@ type ProductFormProduct = {
   description: string;
   detailTable?: unknown;
   coverImage: string;
+  cardTag: string | null;
   whatsappNumber: string | null;
   category: ProductCategoryValue;
   sortOrder: number;
@@ -753,6 +754,32 @@ export function ProductForm({
               className={textareaClassName}
               placeholder="Ana sayfadaki ürün kartında görünecek kısa açıklama"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="cardTag"
+              className="text-sm font-medium text-neutral-700"
+            >
+              Kart etiketi
+            </label>
+
+            <input
+              id="cardTag"
+              name="cardTag"
+              type="text"
+              maxLength={40}
+              defaultValue={product?.cardTag ?? ""}
+              className={inputClassName}
+              placeholder="Örn. OTEL & REZİDANS"
+            />
+
+            <p className="mt-2 text-xs leading-5 text-neutral-500">
+              Ana sayfadaki ilan kartının sağ üstünde parlak
+              etiket olarak görünür. Örn. OTEL & REZİDANS,
+              KENDİ YERİNDE veya 7/24. Boş bırakırsanız
+              etiket gösterilmez.
+            </p>
           </div>
 
           <div>
