@@ -59,12 +59,12 @@ export function AnalyticsTracker({
     const intervalId = window.setInterval(() => {
       lastHeartbeatAt = Date.now();
       sendHeartbeat();
-    }, 120_000);
+    }, 600_000);
 
     const handleVisibilityChange = () => {
       if (
         document.visibilityState === "visible" &&
-        Date.now() - lastHeartbeatAt >= 120_000
+        Date.now() - lastHeartbeatAt >= 600_000
       ) {
         lastHeartbeatAt = Date.now();
         sendHeartbeat();
