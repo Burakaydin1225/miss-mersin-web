@@ -809,26 +809,6 @@ export default async function HomePage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-2.5 pb-12 pt-4 sm:px-4 sm:pt-6 xl:max-w-[1500px]">
-        <section
-  aria-labelledby="home-page-title"
-  className="mb-4 rounded-[16px] border border-black/[0.07] bg-white/90 px-3 py-3 shadow-sm sm:mb-5 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-4 sm:py-3.5"
->
-  <div className="min-w-0 text-center sm:max-w-[520px] sm:text-left">
-    <h1
-      id="home-page-title"
-      className="text-lg font-black tracking-[-0.035em] text-neutral-950 sm:text-xl"
-    >
-      {siteConfig.homeHeading}
-    </h1>
-
-    <p className="mt-1 text-[11px] leading-5 text-neutral-500 sm:text-xs">
-      {siteConfig.homeIntro}
-    </p>
-  </div>
-
-  <SeoRegionLinks regionSlugs={activeRegionSlugs} />
-</section>
-
         {groupedCategories.length > 0 ? (
           <div className="space-y-7 sm:space-y-9">
             {groupedCategories.map((category) => (
@@ -883,7 +863,7 @@ export default async function HomePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 xl:gap-3">
+                <div className="grid grid-cols-2 gap-[3px] sm:gap-1.5 md:grid-cols-3 lg:grid-cols-4 xl:gap-2">
                   {category.items.map((item) => {
                     const neonTheme = getCategoryNeonTheme(category.value);
 
@@ -911,9 +891,9 @@ export default async function HomePage() {
                             boxShadow: advertisementTheme.glow,
                           }}
                         >
-                          <div className="flex h-full min-h-[124px] overflow-hidden rounded-[16px] bg-[linear-gradient(135deg,#ffffff_0%,#fff7ff_48%,#effcff_100%)] sm:min-h-[140px] lg:min-h-[150px]">
+                          <div className="flex h-full min-h-[168px] flex-col overflow-hidden rounded-[16px] bg-[linear-gradient(135deg,#ffffff_0%,#fff7ff_48%,#effcff_100%)] sm:min-h-[140px] sm:flex-row lg:min-h-[150px]">
                             <div
-                              className="relative flex w-[88px] shrink-0 items-center justify-center overflow-hidden sm:w-[104px] lg:w-[112px]"
+                              className="relative flex h-[86px] w-full shrink-0 items-center justify-center overflow-hidden sm:h-auto sm:w-[104px] lg:w-[112px]"
                               style={{
                                 background: advertisementTheme.icon,
                               }}
@@ -1009,14 +989,13 @@ export default async function HomePage() {
                         key={product.id}
                         href={`/urun/${product.slug}`}
                         aria-label={`${product.name} ilanını görüntüle`}
-                        className="group relative block overflow-hidden rounded-[18px] p-[2px] transition duration-200 md:hover:-translate-y-0.5 active:scale-[0.995] sm:rounded-[21px]"
+                        className="group relative block overflow-hidden rounded-[13px] p-px transition duration-200 active:scale-[0.995] sm:rounded-[17px] sm:p-[1.5px] md:hover:-translate-y-0.5"
                         style={{
                           background: neonTheme.frameBackground,
                           boxShadow: neonTheme.glow,
                         }}
                       >
-
-                        <div className="relative z-10 overflow-hidden rounded-[16px] bg-neutral-950 sm:rounded-[19px]">
+                        <div className="relative z-10 overflow-hidden rounded-[12px] bg-neutral-950 sm:rounded-[15px]">
                           <span aria-hidden="true" className="product-card-sheen" />
 
                           <span
@@ -1028,89 +1007,106 @@ export default async function HomePage() {
                           />
 
                           <div
-                            className="relative flex min-h-[34px] items-center gap-2 overflow-hidden border-b px-2.5 py-1.5 sm:min-h-[40px] sm:px-3 sm:py-2 lg:min-h-[42px]"
+                            className="relative z-20 flex min-h-[25px] items-center justify-between gap-1 border-b px-1.5 py-[3px] sm:min-h-[34px] sm:px-2.5 sm:py-1"
                             style={{
                               background: neonTheme.titleBackground,
                               borderColor: neonTheme.divider,
                             }}
                           >
                             <span
-                              aria-hidden="true"
-                              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-white/25 px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-white backdrop-blur-[2px] sm:px-2.5 sm:text-[9px]"
+                              className="inline-flex min-w-0 shrink items-center gap-1 rounded-[6px] border border-white/25 px-1.5 py-1 text-[7px] font-black uppercase leading-none tracking-[0.08em] text-white sm:rounded-full sm:px-2 sm:text-[8px]"
                               style={{
                                 background: neonTheme.cornerBackground,
-                                boxShadow: `0 0 14px ${neonTheme.secondary}70`,
+                                boxShadow: `0 0 10px ${neonTheme.secondary}55`,
                               }}
                             >
-                              <span className="text-[10px] leading-none sm:text-xs">
+                              <span className="hidden sm:inline">
                                 {neonTheme.cornerIcon}
                               </span>
-                              {neonTheme.cornerLabel}
+                              <span className="truncate">
+                                {neonTheme.cornerLabel}
+                              </span>
                             </span>
-
-                            <h3
-                              className="relative min-w-0 flex-1 truncate text-[12px] font-black tracking-[0.01em] sm:text-sm"
-                              style={{
-                                color: neonTheme.titleColor,
-                                textShadow: `0 0 8px ${neonTheme.accent}, 0 0 16px ${neonTheme.accent}88`,
-                              }}
-                            >
-                              {product.name}
-                            </h3>
 
                             {product.cardTag ? (
                               <span
-                                className="max-w-[36%] shrink-0 truncate rounded-full border px-2 py-1 text-center text-[7px] font-black uppercase leading-none tracking-[0.035em] text-white shadow-lg sm:max-w-[40%] sm:px-2.5 sm:text-[8px] sm:tracking-[0.055em] lg:max-w-[38%]"
+                                className="min-w-0 max-w-[58%] truncate rounded-[6px] border px-1.5 py-1 text-right text-[7px] font-black uppercase leading-none tracking-[0.025em] text-white sm:max-w-[55%] sm:rounded-full sm:px-2 sm:text-[8px]"
                                 style={{
                                   borderColor: `${neonTheme.accent}99`,
-                                  background: `linear-gradient(135deg, ${neonTheme.accent}, rgba(0,0,0,0.92))`,
-                                  boxShadow: `0 0 12px ${neonTheme.accent}70`,
+                                  background: `linear-gradient(135deg, rgba(0,0,0,0.90), ${neonTheme.accent}88)`,
+                                  boxShadow: `0 0 9px ${neonTheme.accent}50`,
                                 }}
                                 title={product.cardTag}
                               >
                                 {product.cardTag}
                               </span>
-                            ) : null}
+                            ) : (
+                              <span
+                                className="truncate text-[7px] font-black uppercase tracking-[0.08em] sm:text-[8px]"
+                                style={{
+                                  color: neonTheme.titleColor,
+                                }}
+                              >
+                                Güncel
+                              </span>
+                            )}
                           </div>
 
-                        <div className="relative grid grid-cols-3 overflow-hidden">
-                          {productImageUrls.map((imageUrl, imageIndex) => (
-                            <div
-                              key={`${product.id}-card-image-${imageIndex}`}
-                              className="relative aspect-[5/3] min-w-0 overflow-hidden bg-neutral-200 sm:aspect-[4/3] lg:aspect-square"
-                              style={
-                                imageIndex < 2
-                                  ? {
-                                      borderRight: `1px solid ${neonTheme.divider}`,
-                                    }
-                                  : undefined
-                              }
-                            >
-                              <Image
-                                src={imageUrl}
-                                alt={`${product.name} görsel ${imageIndex + 1}`}
-                                fill
-                                priority={productIndex === 0 && imageIndex === 0}
-                                loading={
-                                  productIndex === 0 && imageIndex === 0
-                                    ? "eager"
-                                    : "lazy"
-                                }
-                                sizes="(max-width: 640px) 33vw, (max-width: 1024px) 17vw, 9vw"
-                                className="object-cover saturate-[1.08] contrast-[1.03] transition duration-200 md:group-hover:scale-[1.02]"
-                              />
-
+                          <div className="relative grid grid-cols-3 overflow-hidden">
+                            {productImageUrls.map((imageUrl, imageIndex) => (
                               <div
-                                aria-hidden="true"
-                                className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100"
-                                style={{
-                                  background: `linear-gradient(135deg, ${neonTheme.accent}22, transparent 55%)`,
-                                }}
-                              />
-                            </div>
-                          ))}
+                                key={`${product.id}-card-image-${imageIndex}`}
+                                className="relative aspect-[5/8] min-w-0 overflow-hidden bg-neutral-200 sm:aspect-[4/3] lg:aspect-square"
+                                style={
+                                  imageIndex < 2
+                                    ? {
+                                        borderRight: `1px solid ${neonTheme.divider}`,
+                                      }
+                                    : undefined
+                                }
+                              >
+                                <Image
+                                  src={imageUrl}
+                                  alt={`${product.name} görsel ${imageIndex + 1}`}
+                                  fill
+                                  priority={productIndex === 0 && imageIndex === 0}
+                                  loading={
+                                    productIndex === 0 && imageIndex === 0
+                                      ? "eager"
+                                      : "lazy"
+                                  }
+                                  sizes="(max-width: 640px) 16.7vw, (max-width: 768px) 16.7vw, (max-width: 1024px) 11vw, 9vw"
+                                  className="object-cover saturate-[1.06] contrast-[1.03] transition duration-200 md:group-hover:scale-[1.02]"
+                                />
 
-                        </div>
+                                <div
+                                  aria-hidden="true"
+                                  className="absolute inset-0 opacity-0 transition duration-300 md:group-hover:opacity-100"
+                                  style={{
+                                    background: `linear-gradient(135deg, ${neonTheme.accent}22, transparent 55%)`,
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          <div
+                            className="relative z-20 flex min-h-[24px] items-center justify-center border-t px-2 py-[3px] sm:min-h-[31px] sm:px-3 sm:py-1"
+                            style={{
+                              borderColor: neonTheme.divider,
+                              background: `linear-gradient(90deg, rgba(0,0,0,0.96), ${neonTheme.secondary}55, rgba(0,0,0,0.96))`,
+                            }}
+                          >
+                            <h3
+                              className="max-w-full truncate text-center text-[10px] font-black uppercase tracking-[0.02em] sm:text-[12px]"
+                              style={{
+                                color: neonTheme.titleColor,
+                                textShadow: `0 0 7px ${neonTheme.accent}CC`,
+                              }}
+                            >
+                              {product.name}
+                            </h3>
+                          </div>
                         </div>
                       </Link>
                     );
@@ -1126,6 +1122,28 @@ export default async function HomePage() {
             </p>
           </div>
         )}
+
+        <section
+          aria-labelledby="home-page-title"
+          className="mt-8 rounded-[16px] border border-black/[0.07] bg-white/90 px-3 py-3 shadow-sm sm:mt-10 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:px-4 sm:py-3.5"
+        >
+          <div className="min-w-0 text-center sm:max-w-[520px] sm:text-left">
+            <h1
+              id="home-page-title"
+              className="text-base font-black tracking-[-0.03em] text-neutral-950 sm:text-xl"
+            >
+              {siteConfig.homeHeading}
+            </h1>
+
+            <p className="mt-1 text-[10px] leading-[18px] text-neutral-500 sm:text-xs sm:leading-5">
+              {siteConfig.homeIntro}
+            </p>
+          </div>
+
+          <div className="mt-3 sm:mt-0">
+            <SeoRegionLinks regionSlugs={activeRegionSlugs} />
+          </div>
+        </section>
 
       </main>
 
