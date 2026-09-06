@@ -74,16 +74,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const regionRoutes: MetadataRoute.Sitemap = seoRegions
-    .filter((region) =>
-      products.some((product) => productBelongsToRegion(product, region)),
-    )
-    .map((region) => ({
-      url: absoluteUrl(`/bolge/${region.slug}`),
-      lastModified: latestListingDate,
-      changeFrequency: "daily",
-      priority: 0.8,
-    }));
+  const regionRoutes: MetadataRoute.Sitemap = seoRegions.map((region) => ({
+    url: absoluteUrl(`/bolge/${region.slug}`),
+    lastModified: latestListingDate,
+    changeFrequency: "daily",
+    priority: 0.8,
+  }));
 
   const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
     url: absoluteUrl(`/urun/${product.slug}`),

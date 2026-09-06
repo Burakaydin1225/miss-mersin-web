@@ -59,10 +59,10 @@ export const siteConfig = {
   homeHeading: "Mersin Escort İlanları",
 
   description:
-    "Mersin escort ilanlarını VIP, Premium ve Gold kategorilerinde inceleyin. Güncel profil, bölge ve iletişim detayları Miss Mersin'da.",
+    "Miss Mersin üzerindeki güncel ilanları kategori ve bölge seçenekleriyle inceleyin. Profil, yayın ve iletişim detaylarına tek katalogdan ulaşın.",
 
   homeIntro:
-    "Erdemli başta olmak üzere Kız Kalesi, Mezitli, Toros, Yenişehir ve çevre bölgelerdeki güncel ilanları kategori ve bölge seçenekleriyle inceleyin.",
+    "Güncel ilanları kategori ve bölge seçenekleriyle keşfedin; ayrıntılı bölge sayfalarından sonuçları daraltın.",
 
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || "",
 

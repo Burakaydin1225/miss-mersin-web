@@ -32,6 +32,8 @@ type ProductDetailTable = {
 type ProductSeoRecord = {
   name: string;
   region?: string | null;
+  shortDescription?: string | null;
+  description?: string | null;
 };
 
 function cleanSeoText(value: string): string {
@@ -43,7 +45,7 @@ function getProductRegionName(product: ProductSeoRecord): string {
     ? getSeoRegionBySlug(product.region)
     : null;
 
-  return regionInformation?.shortName || "Mersin";
+  return regionInformation?.shortName || "İstanbul";
 }
 
 function createProductSeoTitle(
@@ -71,8 +73,18 @@ function createProductSeoDescription(
 ): string {
   const regionName = getProductRegionName(product);
 
+  const uniqueSource = cleanSeoText(
+    product.shortDescription || product.description || "",
+  );
+
+  if (uniqueSource) {
+    return createSeoDescription(
+      `${cleanSeoText(product.name)} — ${uniqueSource}`,
+    );
+  }
+
   return createSeoDescription(
-    `${cleanSeoText(product.name)}, ${regionName} bölgesinde ${categoryLabel} escort ilanı. Güncel profil detayları ve iletişim seçeneklerini ${siteConfig.name}'da inceleyin.`,
+    `${cleanSeoText(product.name)}, ${regionName} bölgesinde ${categoryLabel} ilanı. Güncel profil detaylarını ve mevcut iletişim seçeneklerini ${siteConfig.name}'da inceleyin.`,
   );
 }
 
@@ -231,6 +243,8 @@ export async function generateMetadata({
       category: true,
       coverImage: true,
       region: true,
+      shortDescription: true,
+      description: true,
     },
   });
 
@@ -284,6 +298,17 @@ export async function generateMetadata({
       title,
       description,
       images: product.coverImage ? [product.coverImage] : undefined,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
     },
     other: {
       rating: "adult",
@@ -413,7 +438,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   const whatsappMessage = encodeURIComponent(
-    "Merhaba, Miss Mersin sitesinden geldim. Bilgi almak istiyorum.",
+    "Merhaba, Miss İstanbul sitesinden geldim. Bilgi almak istiyorum.",
   );
 
   const productWhatsappButtons = product.whatsappButtons.map((button) => ({
@@ -652,10 +677,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </h1>
 
                 {detailRegionInformation ? (
-                  <p className="mt-3 text-sm font-semibold text-neutral-500">
-                    Bu ilan {detailRegionInformation.shortName} bölgesinde
-                    listeleniyor.
-                  </p>
+                  <div className="mt-3 text-sm font-semibold text-neutral-500">
+                    <p>
+                      Bu ilan {detailRegionInformation.shortName} bölgesinde
+                      listeleniyor.
+                    </p>
+                    <Link
+                      href={`/bolge/${detailRegionInformation.slug}`}
+                      className="mt-2 inline-flex text-xs font-bold text-fuchsia-700 underline decoration-fuchsia-300 underline-offset-4 transition hover:text-fuchsia-900"
+                    >
+                      {detailRegionInformation.shortName} bölge sayfasına dön
+                    </Link>
+                  </div>
                 ) : null}
 
                 <p className="mt-4 text-sm leading-6 text-neutral-600">
@@ -664,7 +697,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
                 {product.shortDescription ? (
                   <div
-                    data-nosnippet
                     className="mt-5 rounded-2xl border px-4 py-3.5"
                     style={{
                       borderColor: detailTheme.border,
@@ -678,7 +710,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 ) : null}
 
                 <section
-                  data-nosnippet
                   className="mt-6 border-t border-neutral-100 pt-6"
                 >
                   <h2 className="text-xs font-black uppercase tracking-[0.16em] text-neutral-400">
@@ -691,7 +722,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </section>
 
                 {detailTable ? (
-                  <section data-nosnippet className="mt-7">
+                  <section className="mt-7">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <h2 className="text-sm font-black text-neutral-950">
                         {detailTable.title}
