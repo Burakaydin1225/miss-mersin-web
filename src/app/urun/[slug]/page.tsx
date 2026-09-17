@@ -438,7 +438,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   const whatsappMessage = encodeURIComponent(
-    "Merhaba, Miss İstanbul sitesinden geldim. Bilgi almak istiyorum.",
+    "Merhaba, Miss Mersin sitesinden geldim. Bilgi almak istiyorum.",
   );
 
   const productWhatsappButtons = product.whatsappButtons.map((button) => ({
